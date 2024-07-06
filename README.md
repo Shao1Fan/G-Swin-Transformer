@@ -9,7 +9,7 @@ This is an official implementation for "Vision Transformer Based Multi-class Les
 0. Python version == 3.8.19
 1. CUDA version == 11.3
 2. pytorch version == 1.10.1
-3. pip install mmcv-full=={1.4.0} -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10.0/index.html
+3. pip install mmcv-full==1.4.0 -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.10.0/index.html
 4. pip install -r requirements/build.txt
 4.5. pip install cython==0.29.33
 5. python setup.py develop

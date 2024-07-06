@@ -404,7 +404,6 @@ class BasicLayer(nn.Module):
                 x_1[:, 0::2, self.dim//2:] += self.conv1x1(x_2.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
             
         if self.downsample is not None:
-            print(x_1.shape)
             x_down_0 = self.downsample(x_0, H, W)
             x_down_1 = self.downsample(x_1, H, W)
             x_down_2 = self.downsample(x_2, H, W)
