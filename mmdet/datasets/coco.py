@@ -20,20 +20,21 @@ from .custom import CustomDataset
 @DATASETS.register_module()
 class CocoDataset(CustomDataset):
 
-    CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
-               'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
-               'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
-               'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
-               'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
-               'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat',
-               'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
-               'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
-               'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
-               'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
-               'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop',
-               'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
-               'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
-               'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
+    # CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+    #            'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
+    #            'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
+    #            'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
+    #            'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+    #            'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat',
+    #            'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
+    #            'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
+    #            'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+    #            'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+    #            'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop',
+    #            'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
+    #            'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
+    #            'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
+    CLASSES = ('js', 'jc', 'xs')
 
     def load_annotations(self, ann_file):
         """Load annotation from COCO style annotation file.
@@ -367,7 +368,7 @@ class CocoDataset(CustomDataset):
                  metric='bbox',
                  logger=None,
                  jsonfile_prefix=None,
-                 classwise=False,
+                 classwise=True,
                  proposal_nums=(100, 300, 1000),
                  iou_thrs=None,
                  metric_items=None):
@@ -495,6 +496,27 @@ class CocoDataset(CustomDataset):
                 if classwise:  # Compute per-category AP
                     # Compute per-category AP
                     # from https://github.com/facebookresearch/detectron2/
+                    precisions = cocoEval.eval["precision"]
+                    recalls = cocoEval.eval['recall'] # iou*class_num*Areas*Max_det TP/(TP+FN) right/gt
+                    class_num = precisions.shape[2]
+                    results_per_category = ''
+                    for cls_idx in range(class_num):
+                        # area range index 0: all area ranges
+                        # max dets index -1: typically 100 per image
+                        precision = precisions[:, :, cls_idx, 0, -1]
+                        precision_50 = precisions[0, :, cls_idx, 0, -1]
+                        precision = precision[precision > -1]
+                        recall = recalls[ :, cls_idx, 0, -1]
+                        recall_50 = recalls[0, cls_idx, 0, -1]
+                        recall = recall[recall > -1]
+                        ap = np.mean(precision) if precision.size else float("nan")
+                        ap_50 = np.mean(precision_50) if precision.size else float("nan")
+                        rec = np.mean(recall) if precision.size else float("nan")
+                        rec_50 = np.mean(recall_50) if precision.size else float("nan")
+                        results_per_category += '{}:\tAP:{:5.2f}, Recall:{:5.2f}, AP_50:{:5.2f}, Recall_50:{:5.2f}.\n'.format(
+                            cls_idx+1, float(ap * 100), float(rec * 100), float(ap_50 * 100), float(rec_50 * 100)
+                        )
+                    print(results_per_category)
                     precisions = cocoEval.eval['precision']
                     # precision: (iou, recall, cls, area range, max dets)
                     assert len(self.cat_ids) == precisions.shape[2]

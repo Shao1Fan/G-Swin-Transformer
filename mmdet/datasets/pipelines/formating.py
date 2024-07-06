@@ -92,7 +92,11 @@ class ImageToTensor(object):
             img = results[key]
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
-            results[key] = to_tensor(img.transpose(2, 0, 1))
+            if len(img.shape) == 4:
+                img = np.concatenate((img[:, :, :, 0], img[:, :, :, 1], img[:, :, :, 2]), axis=2)
+                results[key] = to_tensor(img.transpose(2, 0, 1))
+            else:
+                results[key] = to_tensor(img.transpose(2, 0, 1))
         return results
 
     def __repr__(self):
@@ -205,7 +209,13 @@ class DefaultFormatBundle(object):
             results = self._add_default_meta_keys(results)
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
-            img = np.ascontiguousarray(img.transpose(2, 0, 1))
+            if len(img.shape) == 4:
+                img_0 = np.ascontiguousarray(img[:, :, :, 0].transpose(2, 0, 1))
+                img_1 = np.ascontiguousarray(img[:, :, :, 1].transpose(2, 0, 1))
+                img_2 = np.ascontiguousarray(img[:, :, :, 2].transpose(2, 0, 1))
+                img = np.concatenate((img_0, img_1, img_2), axis=0)
+            else:
+                img = np.ascontiguousarray(img.transpose(2, 0, 1))
             results['img'] = DC(to_tensor(img), stack=True)
         for key in ['proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels']:
             if key not in results:
