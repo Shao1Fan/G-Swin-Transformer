@@ -400,16 +400,18 @@ class BasicLayer(nn.Module):
                 x_0 = blk(x_0, attn_mask)
                 x_1 = blk(x_1, attn_mask)
                 x_2 = blk(x_2, attn_mask)
-                x_1[:, 0::2, :self.dim//2] += self.conv1x1(x_0.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
-                x_1[:, 0::2, self.dim//2:] += self.conv1x1(x_2.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
             
         if self.downsample is not None:
             x_down_0 = self.downsample(x_0, H, W)
             x_down_1 = self.downsample(x_1, H, W)
             x_down_2 = self.downsample(x_2, H, W)
             Wh, Ww = (H + 1) // 2, (W + 1) // 2
+            x_1[:, 0::2, :self.dim//2] += 1 * self.conv1x1(x_0.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
+            x_1[:, 0::2, self.dim//2:] += 1 * self.conv1x1(x_2.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
             return x_1, H, W, x_down_0, x_down_1, x_down_2, Wh, Ww
         else:
+            x_1[:, 0::2, :self.dim//2] += 0 * self.conv1x1(x_0.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
+            x_1[:, 0::2, self.dim//2:] += 0 * self.conv1x1(x_2.permute(0, 2, 1)).permute(0, 2, 1)[:, 0::2, :]
             return x_1, H, W, x_0, x_1, x_2, H, W
 
 
